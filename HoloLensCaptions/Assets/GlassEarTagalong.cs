@@ -70,14 +70,14 @@ namespace HoloToolkit.Unity
         {
             base.Update();
 
-            float textSize = 0.0007F;
+            float textSize = 0.0015F; // 0.0007F;
             if (CaptionController.Instance.TextSize == 1)
             {
-                textSize = 0.0009F;
+                textSize = 0.0020F; // 0.0009F;
             }
             if (CaptionController.Instance.TextSize == 2)
             {
-                textSize = 0.0012F;
+                textSize = 0.0025F; // 0.0012F;
             }
 
             GetComponent<TextMesh>().characterSize = textSize;
@@ -91,6 +91,66 @@ namespace HoloToolkit.Unity
             {
                 GetComponent<TextMesh>().color = Color.white;
             }
+        }
+
+        public void AddText_interm(string intermString)
+        {
+            if (intermString.Length == 0)
+            {
+                return;
+            }
+
+            string[] words = intermString.Split(null);
+
+            List<string> lines_temp = new List<string>(lines);
+            string lastline = "";
+            if (lines_temp.Count > 0)
+            {
+                lastline = lines_temp[lines_temp.Count - 1];
+                lines_temp.RemoveAt(lines_temp.Count - 1);
+            }
+
+            foreach (var the_word in words)
+            {
+                string word = the_word;
+                bool startsWithNewLine = false;
+
+                if (word.StartsWith("///NL///"))
+                {
+                    word = word.Substring(8);
+                    startsWithNewLine = true;
+                }
+
+                if (word.Length > 0)
+                {
+                    if (startsWithNewLine || (finishedLastWord && lastline.Length + word.Length > CaptionController.Instance.TextLineLength))
+                    {
+                        lines_temp.Insert(lines_temp.Count, lastline);
+                        lastline = "";
+                        finishedLastWord = false;
+                    }
+
+                    if (finishedLastWord)
+                    {
+                        lastline += " ";
+                    }
+                    lastline += word;
+
+                }
+                finishedLastWord = true;
+            }
+
+            finishedLastWord = words[words.Length - 1] == "";
+
+            lines_temp.Insert(lines_temp.Count, lastline);
+
+            while (lines_temp.Count > CaptionController.Instance.TextLines)          // Number of Lines to Display
+            {
+                lines_temp.RemoveAt(0);
+            }
+
+            TextMesh captionDisplay = GetComponent<TextMesh>();
+            captionDisplay.text = string.Join("\n", lines_temp.ToArray());
         }
 
         public void AddText(string message) {
@@ -155,7 +215,6 @@ namespace HoloToolkit.Unity
             TextMesh captionDisplay = GetComponent<TextMesh>();
 
             captionDisplay.text = string.Join("\n", lines.ToArray());
-
         }
 
         /// <summary>
@@ -181,8 +240,9 @@ namespace HoloToolkit.Unity
             Transform cameraTransform = CameraCache.Main.transform;
             Vector3 cameraPosition = cameraTransform.position;
 
+            Debug.DrawRay(Camera.main.transform.position, frustumPlanes[frustumBottom].normal, Color.red, 0.1f, false);
             Vector3 normalizedWindowPos = cameraPosition + (transform.position - cameraPosition).normalized;
-            Vector3 normalizedTargetPos = cameraPosition + (cameraTransform.forward + (frustumPlanes[frustumBottom].normal * (-0.5F * frustumPlanes[frustumBottom].GetDistanceToPoint(cameraPosition + cameraTransform.forward)))).normalized;
+            Vector3 normalizedTargetPos = cameraPosition + (cameraTransform.forward + (frustumPlanes[frustumBottom].normal * (0.3F * frustumPlanes[frustumBottom].GetDistanceToPoint(cameraPosition + cameraTransform.forward)))).normalized;
 
             if (!frozen) {
                 Vector3 offset = normalizedWindowPos - normalizedTargetPos; 
