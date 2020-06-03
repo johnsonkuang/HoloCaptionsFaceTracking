@@ -1,0 +1,1 @@
+C:\Users\Johnson\code\HoloFace\HoloFace\HoloFace.csproj;x86
